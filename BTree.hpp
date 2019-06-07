@@ -1,3 +1,5 @@
+//2019-06-07
+
 #include "utility.hpp"
 #include <functional>
 #include <cstddef>
@@ -16,7 +18,7 @@ namespace sjtu {
 		public:
 			//存储类型(0普通 1叶子)
 			bool block_type = false;
-			//数量（L或者M）
+			//数量
 			off_t _size = 0;
 			//相对位置
 			off_t _pos = 0;
@@ -82,14 +84,14 @@ namespace sjtu {
 		static FILE* fp;
 
 		//私有函数
-		//块内存写入
+		//块内存读取
 		template <class MEM_TYPE>
 		static void mem_read(MEM_TYPE buff, off_t buff_size, off_t pos) {
 			fseek(fp, long(buff_size * pos), SEEK_SET);
 			fread(buff, buff_size, 1, fp);
 		}
 
-		//块内存读取
+		//块内存写入
 		template <class MEM_TYPE>
 		static void mem_write(MEM_TYPE buff, off_t buff_size, off_t pos) {
 			fseek(fp, long(buff_size * pos), SEEK_SET);
@@ -505,7 +507,7 @@ namespace sjtu {
 		}
 
 		//创建文件
-		void check_file() {
+		/*void check_file() {
 			if (!fp) {
 				//创建新的树
 				fp = fopen(BPTREE_ADDRESS, "wb+");
@@ -525,7 +527,7 @@ namespace sjtu {
 			char buff[BLOCK_SIZE] = { 0 };
 			mem_read(buff, BLOCK_SIZE, 0);
 			memcpy(&tree_data, buff, sizeof(tree_data));
-		}
+		}*/
 	public:
 		typedef pair<const Key, Value> value_type;
 
@@ -806,6 +808,7 @@ namespace sjtu {
 		}
 		~BTree() {
 			// Todo Destructor
+			write_tree_data();
 			fclose(fp);
 		}
 		// Insert: Insert certain Key-Value into the database
@@ -813,7 +816,7 @@ namespace sjtu {
 		// element, the second of the pair is Success if it is successfully inserted
 		pair<iterator, OperationResult> insert(const Key& key, const Value& value) {
 			// TODO insert function
-			check_file();
+			//check_file();
 			if (empty()) {
 				auto root_pos = create_leaf_node(0, tree_data.data_block_head, tree_data.data_block_rear);
 
@@ -867,7 +870,6 @@ namespace sjtu {
 				}
 				cur_parent = cur_pos;
 				cur_pos = normal_data.val[child_pos]._child;
-				cur_pos = cur_pos;
 			}
 
 			Block_Head info;
@@ -906,7 +908,7 @@ namespace sjtu {
 					ans.cur_pos = value_pos;
 					//修改树的基本参数
 					++tree_data._size;
-					write_tree_data();
+					//write_tree_data();
 					pair<iterator, OperationResult> to_return(ans, Success);
 					return to_return;
 				}
@@ -917,7 +919,7 @@ namespace sjtu {
 		// Return Success if it is successfully erased
 		// Return Fail if the key doesn't exist in the database
 		OperationResult erase(const Key& key) {
-			check_file();
+			//check_file();
 			// TODO erase function
 			if (empty()) {
 				return Fail;
@@ -964,7 +966,7 @@ namespace sjtu {
 					}
 					balance_leaf(info, leaf_data);
 					--tree_data._size;
-					write_tree_data();
+					//write_tree_data();
 					return Success;
 				}
 				if (value_pos >= info._size || leaf_data.val[value_pos].first > key) {
@@ -974,7 +976,7 @@ namespace sjtu {
 			return Fail;  // I can finish this part!!! 
 		}
 		iterator begin() {
-			check_file();
+			//check_file();
 			iterator result;
 			char buff[BLOCK_SIZE] = { 0 };
 			mem_read(buff, BLOCK_SIZE, tree_data.data_block_head);
@@ -999,7 +1001,7 @@ namespace sjtu {
 		}
 		// Return a iterator to the end(the next element after the last)
 		iterator end() {
-			check_file();
+			//check_file();
 			iterator result;
 			char buff[BLOCK_SIZE] = { 0 };
 			mem_read(buff, BLOCK_SIZE, tree_data.data_block_rear);
@@ -1071,6 +1073,7 @@ namespace sjtu {
 						break;
 					}
 				}
+				cur_parent = cur_pos;
 				cur_pos = normal_data.val[child_pos]._child;
 			}
 			Block_Head info;
@@ -1129,6 +1132,7 @@ namespace sjtu {
 						break;
 					}
 				}
+				cur_parent = cur_pos;
 				cur_pos = normal_data.val[child_pos]._child;
 			}
 			Block_Head info;
@@ -1178,6 +1182,7 @@ namespace sjtu {
 						break;
 					}
 				}
+				cur_parent = cur_pos;
 				cur_pos = normal_data.val[child_pos]._child;
 			}
 			Block_Head info;
