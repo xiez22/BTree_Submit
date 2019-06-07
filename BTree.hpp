@@ -921,7 +921,7 @@ namespace sjtu {
 		OperationResult erase(const Key& key) {
 			//check_file();
 			// TODO erase function
-			/*if (empty()) {
+			if (empty()) {
 				return Fail;
 			}
 			//查找正确的节点位置
@@ -972,7 +972,7 @@ namespace sjtu {
 				if (value_pos >= info._size || leaf_data.val[value_pos].first > key) {
 					return Fail;
 				}
-			}*/
+			}
 			return Fail;  // I can finish this part!!! 
 		}
 		iterator begin() {
