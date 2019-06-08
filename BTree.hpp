@@ -1,11 +1,16 @@
-//2019-06-07
-
 #include "utility.hpp"
 #include <functional>
 #include <cstddef>
 #include "exception.hpp"
 #include <cstdio>
 namespace sjtu {
+	//得到合适的block大小
+	template <class Key, class Value>
+	constexpr off_t get_block_size() {
+		off_t cur_size = 4096;
+		for (; cur_size < (sizeof(Key) + sizeof(Value)) * 8; cur_size *= 2);
+		return cur_size;
+	}
 	//B+树索引存储地址
 	constexpr char BPTREE_ADDRESS[128] = "bptree_data.sjtu";
 	template <class Key, class Value, class Compare = std::less<Key> >
@@ -36,8 +41,8 @@ namespace sjtu {
 			Key _key;
 		};
 
-		//B+树大数据块大小
-		constexpr static off_t BLOCK_SIZE = 4096;
+		//B+树大数据块大小	
+		constexpr static off_t BLOCK_SIZE = get_block_size<Key, Value>();
 		//大数据块预留数据块大小
 		constexpr static off_t INIT_SIZE = sizeof(Block_Head);
 		//Key类型的大小
@@ -110,7 +115,7 @@ namespace sjtu {
 		//获取新内存
 		off_t memory_allocation() {
 			++tree_data.block_cnt;
-			write_tree_data();
+			//write_tree_data();
 			char buff[BLOCK_SIZE] = { 0 };
 			mem_write(buff, BLOCK_SIZE, tree_data.block_cnt - 1);
 			return tree_data.block_cnt - 1;
@@ -187,7 +192,7 @@ namespace sjtu {
 				//创建根节点
 				auto root_pos = create_normal_node(0);
 				tree_data.root_pos = root_pos;
-				write_tree_data();
+				//write_tree_data();
 				read_block(&parent_info, &parent_data, root_pos);
 				origin_info._parent = root_pos;
 				++parent_info._size;
@@ -251,7 +256,7 @@ namespace sjtu {
 				//创建根节点
 				auto root_pos = create_normal_node(0);
 				tree_data.root_pos = root_pos;
-				write_tree_data();
+				//write_tree_data();
 				read_block(&parent_info, &parent_data, root_pos);
 				origin_info._parent = root_pos;
 				++parent_info._size;
@@ -329,7 +334,7 @@ namespace sjtu {
 			//判断是否是根
 			if (info._pos == tree_data.root_pos && info._size <= 1) {
 				tree_data.root_pos = normal_data.val[0]._child;
-				write_tree_data();
+				//write_tree_data();
 				return;
 			}
 			else if (info._pos == tree_data.root_pos) {
@@ -628,6 +633,15 @@ namespace sjtu {
 				value_type result(leaf_data.val[cur_pos].first, leaf_data.val[cur_pos].second);
 				return result;
 			}
+			Value getValue() const {
+				if (cur_pos >= block_info._size)
+					throw invalid_iterator();
+				char buff[BLOCK_SIZE] = { 0 };
+				mem_read(buff, BLOCK_SIZE, block_info._pos);
+				Leaf_Data leaf_data;
+				memcpy(&leaf_data, buff + INIT_SIZE, sizeof(leaf_data));
+				return leaf_data.val[cur_pos].second;
+			}
 			bool operator==(const iterator& rhs) const {
 				// Todo operator ==
 				return cur_bptree == rhs.cur_bptree
@@ -838,7 +852,7 @@ namespace sjtu {
 
 				++tree_data._size;
 				tree_data.root_pos = root_pos;
-				write_tree_data();
+				//write_tree_data();
 
 				pair<iterator, OperationResult> result(begin(), Success);
 				return result;
